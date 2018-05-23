@@ -56,4 +56,5 @@ For early versions of OpenSSL check docs for 'OpenSSL thread support'.
 ```
 ##### __LICENSE__
 License here is definitely the same as for original [OpenSSL](https://github.com/openssl/openssl) toolkit.  
-You can obtain a copy in the file LICENSE in the source distribution or [online](https://www.openssl.org/source/license.html).
+You can obtain a copy in the file LICENSE in the source distribution or [online](https://www.openssl.org/source/license.html).  
+OpenSSL team confirmed that everything is fine with license terms of this repository, see [#6334](https://github.com/openssl/openssl/issues/6334) for details.  
