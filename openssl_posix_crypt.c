@@ -116,7 +116,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt, c
     if (salt_len > 8)
         goto err;
 
-    md = EVP_MD_CTX_new();
+    md = EVP_MD_CTX_create();
     if (md == NULL
         || !EVP_DigestInit_ex(md, EVP_md5(), NULL)
         || !EVP_DigestUpdate(md, passwd, passwd_len))
@@ -131,7 +131,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt, c
     if (!EVP_DigestUpdate(md, ascii_salt, salt_len))
         goto err;
 
-    md2 = EVP_MD_CTX_new();
+    md2 = EVP_MD_CTX_create();
     if (md2 == NULL
         || !EVP_DigestInit_ex(md2, EVP_md5(), NULL)
         || !EVP_DigestUpdate(md2, passwd, passwd_len)
@@ -178,8 +178,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt, c
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
                 goto err;
     }
-    EVP_MD_CTX_free(md2);
-    EVP_MD_CTX_free(md);
+    EVP_MD_CTX_destroy(md2);
+    EVP_MD_CTX_destroy(md);
     md2 = NULL;
     md = NULL;
 
@@ -220,8 +220,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt, c
 
  err:
     OPENSSL_free(ascii_passwd);
-    EVP_MD_CTX_free(md2);
-    EVP_MD_CTX_free(md);
+    EVP_MD_CTX_destroy(md2);
+    EVP_MD_CTX_destroy(md);
     return NULL;
 }
 
@@ -322,14 +322,14 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt, c
     if (strlen(out_buffer) > 3 + 17 * rounds_custom + salt_len )
         goto err;
 
-    md = EVP_MD_CTX_new();
+    md = EVP_MD_CTX_create();
     if (md == NULL
         || !EVP_DigestInit_ex(md, sha, NULL)
         || !EVP_DigestUpdate(md, passwd, passwd_len)
         || !EVP_DigestUpdate(md, ascii_salt, salt_len))
         goto err;
 
-    md2 = EVP_MD_CTX_new();
+    md2 = EVP_MD_CTX_create();
     if (md2 == NULL
         || !EVP_DigestInit_ex(md2, sha, NULL)
         || !EVP_DigestUpdate(md2, passwd, passwd_len)
@@ -367,8 +367,10 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt, c
     if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
         return NULL;
 
-    if ((p_bytes = OPENSSL_zalloc(passwd_len)) == NULL)
+    p_bytes = malloc(passwd_len);
+    if (p_bytes == NULL)
         goto err;
+    memset(p_bytes, 0, passwd_len);
     for (cp = p_bytes, n = passwd_len; n > buf_size; n -= buf_size, cp += buf_size)
         memcpy(cp, temp_buf, buf_size);
     memcpy(cp, temp_buf, n);
@@ -384,8 +386,10 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt, c
     if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
         return NULL;
 
-    if ((s_bytes = OPENSSL_zalloc(salt_len)) == NULL)
+    s_bytes = malloc(salt_len);
+    if (s_bytes == NULL)
         goto err;
+    memset(s_bytes, 0, salt_len);
     for (cp = s_bytes, n = salt_len; n > buf_size; n -= buf_size, cp += buf_size)
         memcpy(cp, temp_buf, buf_size);
     memcpy(cp, temp_buf, n);
@@ -412,8 +416,8 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt, c
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
                 goto err;
     }
-    EVP_MD_CTX_free(md2);
-    EVP_MD_CTX_free(md);
+    EVP_MD_CTX_destroy(md2);
+    EVP_MD_CTX_destroy(md);
     md2 = NULL;
     md = NULL;
     OPENSSL_free(p_bytes);
@@ -481,10 +485,10 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt, c
     return out_buffer;
 
  err:
-    EVP_MD_CTX_free(md2);
-    EVP_MD_CTX_free(md);
-    OPENSSL_free(p_bytes);
-    OPENSSL_free(s_bytes);
+    EVP_MD_CTX_destroy(md2);
+    EVP_MD_CTX_destroy(md);
+    free(p_bytes);
+    free(s_bytes);
     return NULL;
 }
 
