@@ -14,7 +14,7 @@ static const char* strsafe(const char* v)
     return v;
 }
 
-static int run_test(const char* test_id, const char* password, const char* salt, const char* expected)
+static int run_test(const char* test_id, int stage, const char* password, const char* salt, const char* expected)
 {
     char* hash =  NULL;
     const char* status =  NULL;
@@ -32,7 +32,7 @@ static int run_test(const char* test_id, const char* password, const char* salt,
         passed = 1;
     }
     status = passed ? STATUS_OK : STATUS_FAILED;
-    printf("%s %s salt='%s' password='%s' >> %s\n", test_id, status, strsafe(salt), strsafe(password), strsafe(hash));
+    printf("%s/%d %s salt='%s' password='%s' >> %s\n", test_id, stage, status, strsafe(salt), strsafe(password), strsafe(hash));
     if (!passed)
     {
         printf("            - expected: %s\n", strsafe(expected));
@@ -122,7 +122,11 @@ int main(int argc, char **argv)
                 printf("Test sequnce interrupted.\n");
                 break;
             }
-            ret = run_test(t->TestID, t->Password, t->Salt, t->Expected);
+            ret = run_test(t->TestID, 0, t->Password, t->Salt, t->Expected);
+            if ((ret == 0) && t->Salt && t->Salt[0] == '$')
+            {
+                ret = run_test(t->TestID, 1, t->Password, t->Expected, t->Expected);
+            }
         }
         return ret;
     }

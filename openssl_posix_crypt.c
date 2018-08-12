@@ -58,6 +58,7 @@ static const char method_id_1[] = { '1', 0 };
 static const char method_id_apr1[] = { 'a', 'p', 'r', '1', 0 };
 static const char method_id_5[] = { '5', 0 };
 static const char method_id_6[] = { '6', 0 };
+static const char rounds_prefix[] = {'r', 'o', 'u', 'n', 'd', 's', '=', 0 };
 
 /*
  * MD5-based password algorithm (should probably be available as a library
@@ -232,8 +233,6 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt, c
  */
 static char *shacrypt(const char *passwd, const char *magic, const char *salt, char* out_buffer, size_t out_buflen)
 {
-    /* Prefix for optional rounds specification.  */
-    const char rounds_prefix[] = "rounds=";
     /* Maximum salt string length.  */
 # define SALT_LEN_MAX 16
     /* Default number of rounds if not explicitly specified.  */
@@ -571,6 +570,18 @@ char* openssl_posix_crypt(const char* key, const char* salt_in, char* dest, size
                 mode = passwd_sha256;
             else if (strcmp(method_id, method_id_6) == 0)
                 mode = passwd_sha512;
+            p = strchr(salt, ascii_dollar[0]);
+            if (p) {
+                if (strncmp(rounds_prefix, salt, strlen(rounds_prefix)) == 0) {
+                    ++p;
+                    p = strchr(p, ascii_dollar[0]);
+                    if (p)
+                        *p = 0;
+                }
+                else {
+                    *p = 0;
+                }
+            }
         }
     }
     hash = do_passwd(mode, passwd, salt, dest, destlen);
